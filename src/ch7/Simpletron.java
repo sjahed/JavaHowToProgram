@@ -21,14 +21,17 @@ public class Simpletron {
 	private static final int DIVIDE = 32;
 	private static final int SUBTRACT = 31;
 	private static final int MULTIPLY = 33;
+	private static final int REMINDER = 34;
+	private static final int EXPONTENTIATION = 35;
 	private static final int BRANCH = 40;
 	private static final int BRANCHNEG = 41;
 	private static final int BRANCHZERO = 42;
 	private static final int HALT = 43;
 	
-	private static final int MAX_MEMORY_SIZE=100;
+	private static final int MAX_MEMORY_SIZE=1000;
 	
 	private final int EXIT_CODE = -99999;
+	private final String ST_EXIT_CODE = "-99999";
 	private final int RANGE_MIN = 1000;
 	private final int RANGE_MAX = 9999;
 
@@ -93,6 +96,9 @@ public class Simpletron {
 				break;
 			case MULTIPLY:
 				multiply(operand);
+				break;
+			case REMINDER:
+				reminder(operand);
 				break;
 			case BRANCH:
 				branch(operand);
@@ -160,6 +166,19 @@ public class Simpletron {
 		}
 		
 	}
+	public void reminder(int addressToReadFrom){
+		try{
+			accum %= memory[addressToReadFrom];
+		}catch(ArithmeticException e){
+			System.out.println("Can't divide by zero!");
+			System.out.println("Operation terminated abnormally");
+			//halt = true;
+		}
+	}
+	
+	public void exponentiation(int addressToReadFrom){
+		accum = (int) Math.pow(accum, memory[addressToReadFrom]);
+	}
 	
 	private void multiply(int addressToReadFrom){
 		accum *= memory[addressToReadFrom];
@@ -205,9 +224,7 @@ public class Simpletron {
 					program[counter] = in;
 				}//end of if_elseif_else - check if exit requested, number within range
 				
-				
 				counter++;
-				
 				
 			}catch(Exception ex){
 				System.out.println("Input exception");
@@ -219,6 +236,37 @@ public class Simpletron {
 		
 		return program;
 	}//end of loadInput method
+	private String [] hexInput(){
+		
+		String [] program = new String[MAX_MEMORY_SIZE];
+		
+		int counter = 0;
+		do{
+			try{
+				//show input label
+				System.out.printf("%02d ? ",counter);
+				String in = input.nextLine();
+				
+				if(in.equals(ST_EXIT_CODE)){
+					System.out.printf(END_LOADING_MESSAGE);
+					break;
+				}
+				else{
+					program[counter] = in;
+				}//end of if_elseif_else - check if exit requested, number within range
+				
+				counter++;
+				
+			}catch(Exception ex){
+				System.out.println("Input exception");
+				break;
+			}//end of try-catch block
+			
+			
+		}while(counter < program.length);//end of do_while loop - until memory available, read instructions
+		
+		return program;
+	}//end of hexInput method
 	
 	private String welcomeMessage(){
 		
