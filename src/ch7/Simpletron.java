@@ -28,7 +28,7 @@ public class Simpletron {
 	private static final int BRANCHZERO = 42;
 	private static final int HALT = 43;
 	
-	private static final int MAX_MEMORY_SIZE=1000;
+	private static final int MAX_MEMORY_SIZE=100;
 	
 	private final int EXIT_CODE = -99999;
 	private final String ST_EXIT_CODE = "-99999";
@@ -281,9 +281,15 @@ public class Simpletron {
 	}//end of welcomeMessage method
 	
 	private String compDump(){
-		String line = String.format("\n\nREGISTERS:\n");
-		line += String.format("%-21s %+05d\n%-21s %02d\n%-21s %+05d\n%-21s %02d\n%-21s %02d\n\n","accumulator",accum,
-				"instructionCounter",instructionCounter,"instructionRegister",instructionRegister,"operationCode",operationCode,"operand",operand);
+		String line = "";
+		line += String.format("%-21s%+05d\n%-21s%6s%-21s%+05d\n%-21s%6s%-21s%6s",
+                "accumulator",accum,
+                "instructionCounter",String.format("%02d\n", instructionCounter),
+                "instructionRegister",instructionRegister,
+                "operationCode",String.format("%02d\n", operationCode),
+                "operand",String.format("%02d\n", operand) );
+		
+		
 		line += (String.format("MEMORY:\n"));
 		line += (String.format("  %5d%5d%5d%5d%5d%5d%5d%5d%5d%5d\n",0,1,2,3,4,5,6,7,8,9));
 
