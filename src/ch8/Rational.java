@@ -9,18 +9,22 @@ import java.util.Set;
 public class Rational {
 
 	public static void main(String [] args){
-		new Rational("1/33");
+		Rational r = new Rational("1/33");
+		Rational r2 = new Rational();
+		r2.addFractions("1/3", "1/3");
 	}
 	
 	private int nominator;
 	private int denominator;
 	private String inputFraction;
-	private int timesBigger;
 	String[] partsOfFraction;
 	
+	public Rational(){
+		
+	}
 	public Rational(String fraction){
 		inputFraction = fraction;
-		timesBigger = 0;
+	
 		partsOfFraction = fraction.split("/");
 		reduceFraction(Integer.parseInt(partsOfFraction[0]),
 				Integer.parseInt(partsOfFraction[1]));
@@ -43,16 +47,37 @@ public class Rational {
 		return inputFraction;
 	}
 	
-	private static String addFractions(String a, String b){
+	private void addFractions(String a , String b){
 		
+		List<Integer> result = new ArrayList<Integer>();
+		int newFraNom, newFraDen;
+		
+		int nomFraA = Integer.parseInt(a.split("/")[0]);
+		int denFraA = Integer.parseInt(a.split("/")[1]);
+		int nomFraB = Integer.parseInt(b.split("/")[0]);
+		int denFraB = Integer.parseInt(b.split("/")[1]);
+		
+		if(denFraA != denFraB){
+			newFraNom = nomFraA * denFraB + nomFraB * denFraA;
+			newFraDen = denFraA * denFraB;
+			result = reduceFraction(newFraNom, newFraDen);
+		}else{
+			newFraNom = nomFraA + nomFraB;
+			newFraDen = denFraB;
+			result = reduceFraction(newFraNom, newFraDen);
+		}
+		
+		System.out.println(result.get(0)+"/"+result.get(1));
 	}
 	
-	private void reduceFraction(int a, int b){
+	private List<Integer> reduceFraction(int a, int b){
+		
+		List<Integer> result = new ArrayList<Integer>();
 		int commonDivider = 0;
-
 		commonDivider = GCF(a,b);
-		setNominator(a/commonDivider);
-		setDenominator(b/commonDivider);	
+		result.add(a/commonDivider);
+		result.add(b/commonDivider);
+		return result;
 	}
 	
 	/*
