@@ -48,6 +48,7 @@ public class FibonacciNumbers extends JFrame {
 				}
 				fibonacciJLabel.setText("Calculating...");
 				BackgroundCalculator task = new BackgroundCalculator(n, fibonacciJLabel);
+				task.execute();
 			}
 		});//end of goJButton actionListener
 		
