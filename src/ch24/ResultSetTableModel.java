@@ -7,7 +7,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 
 // ResultSet rows and columns are counted from 1 and JTable 
 // rows and columns are counted from 0. When processing 
@@ -42,6 +46,7 @@ public class ResultSetTableModel extends AbstractTableModel
       // update database connection status
       connectedToDatabase = true;
 
+   
       // set query and execute it
       setQuery(query);
    } 
