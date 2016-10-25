@@ -61,10 +61,10 @@ public class ResultSetTableModel extends AbstractTableModel
       // determine Java class of column
       try 
       {
-         String className = metaData.getColumnClassName(column + 1);
+         return metaData.getColumnClassName(column + 1).getClass();
          
          // return Class object that represents className
-         return Class.forName(className);
+        // return Class.forName(className);
       }
       catch (Exception exception) 
       {
