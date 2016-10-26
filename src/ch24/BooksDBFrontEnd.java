@@ -5,6 +5,10 @@ import java.awt.EventQueue;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -12,10 +16,13 @@ import java.sql.SQLException;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 
 public class BooksDBFrontEnd extends JFrame {
@@ -30,78 +37,98 @@ public class BooksDBFrontEnd extends JFrame {
 	private JButton addAuthorBtn, addTitlesBtn, addISBNBtn;
 	private JButton deleteAuthorBtn, deletetitlesBtn, deleteISBNBtn;
 	private JButton updateAuthorBtn, updateTitlesBtn,  updateISBNBtn;
-	private BooksDBTableModel authorsTable, titlesTable, isbnTable;
-
-	private BooksDBTableModel tableModel;
+	
+	private BooksDBTableModel authorTableModel, titlesTableModel, isbnTableModel;
 	
 	public BooksDBFrontEnd(){
 		super("Books Database");
-		setLayout(new GridLayout(1,1));
-		
-		
-		try {
+		try{
+
+			setLayout(new GridLayout(1,1));
+			
 			connection = new DBConnection();
-			tableModel = new BooksDBTableModel(connection.getConnection());
 			
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			
+			authorTableModel = new BooksDBTableModel(connection.getConnection()
+						, SELECT_AUTHORS_Q);
+			titlesTableModel = new BooksDBTableModel(connection.getConnection(),
+						SELECT_TITLES_Q);
+			isbnTableModel = new BooksDBTableModel(connection.getConnection(),
+						SELECT_ISBN_Q);
+				
+		
+			pane = new JTabbedPane();
+			JPanel authorsPanel = new JPanel();
+			JPanel titlesPanel = new JPanel();
+			JPanel isbnTitlesPanel = new JPanel();
+			
+			//setup authors,titles, isbn tabs
+			authorsPanel.setLayout(new BorderLayout());
+			titlesPanel.setLayout(new BorderLayout());
+			isbnTitlesPanel.setLayout(new BorderLayout());
+			
+			JScrollPane scrollPaneAuthors = new JScrollPane((new JTable(authorTableModel)),ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+			JScrollPane scrollPaneTitles = new JScrollPane((new JTable(titlesTableModel)), ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+			JScrollPane scrollPaneISBN = new JScrollPane((new JTable(isbnTableModel)),ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+			
+			
+			authorsPanel.add(scrollPaneAuthors, BorderLayout.CENTER);
+			titlesPanel.add(scrollPaneTitles, BorderLayout.CENTER);
+			isbnTitlesPanel.add(scrollPaneISBN, BorderLayout.CENTER);
+			
+			JPanel authorsBtnPanel = new JPanel(new GridLayout(1, 3));
+			authorsBtnPanel.add((addAuthorBtn = new ModifiedButton("Add Record")));
+			authorsBtnPanel.add((deleteAuthorBtn = new ModifiedButton("Delete Record")));
+			authorsBtnPanel.add((updateAuthorBtn = new ModifiedButton("Update Record")));
+			authorsPanel.add(authorsBtnPanel, BorderLayout.SOUTH);
+			
+			JPanel titlesBtnPanel = new JPanel(new GridLayout(1,3));
+			titlesBtnPanel.add((addTitlesBtn = new ModifiedButton("Add Record")));
+			titlesBtnPanel.add((deletetitlesBtn = new ModifiedButton("Delete Record")));
+			titlesBtnPanel.add((updateTitlesBtn = new ModifiedButton("Update Record")));
+			titlesPanel.add(titlesBtnPanel, BorderLayout.SOUTH);
+			
+			JPanel isbnBtnPanel = new JPanel(new GridLayout(1,3));
+			isbnBtnPanel.add((addISBNBtn = new ModifiedButton("Add Record")));
+			isbnBtnPanel.add((deleteISBNBtn = new ModifiedButton("Delete Record")));
+			isbnBtnPanel.add((updateTitlesBtn = new ModifiedButton("Update Record")));
+			isbnTitlesPanel.add(isbnBtnPanel, BorderLayout.SOUTH);
+			
+			
+			addWindowListener(new WindowAdapter() {
+
+				@Override
+				public void windowClosed(WindowEvent e) {
+					
+					super.windowClosed(e);
+					
+					authorTableModel.disconnectDB();
+					titlesTableModel.disconnectDB();
+					isbnTableModel.disconnectDB();
+					System.exit(0);
+				}
+				
+			});
+			
+			pane.addTab("Authors", authorsPanel);
+			pane.addTab("Titles",titlesPanel);
+			pane.addTab("ISBN-Title",isbnTitlesPanel);
+			add(pane);
+			pack();
+			setDefaultCloseOperation(EXIT_ON_CLOSE);
+			setVisible(true);
+			
+		}catch(SQLException sqlEx){
+			sqlEx.printStackTrace();
+			authorTableModel.disconnectDB();
+			titlesTableModel.disconnectDB();
+			isbnTableModel.disconnectDB();
+			System.exit(1);
 		}
 		
-		pane = new JTabbedPane();
-		JPanel authorsPanel = new JPanel();
-		JPanel titlesPanel = new JPanel();
-		JPanel isbnTitlesPanel = new JPanel();
-		
-		//setup authors,titles, isbn tabs
-		authorsPanel.setLayout(new BorderLayout());
-		titlesPanel.setLayout(new BorderLayout());
-		isbnTitlesPanel.setLayout(new BorderLayout());
-		
-		JScrollPane scrollPaneAuthors = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		JScrollPane scrollPaneTitles = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		JScrollPane scrollPaneISBN = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		
-		try {
-			
-			
-		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		authorsPanel.add(scrollPaneAuthors, BorderLayout.CENTER);
-		titlesPanel.add(scrollPaneTitles, BorderLayout.CENTER);
-		isbnTitlesPanel.add(scrollPaneISBN, BorderLayout.CENTER);
-		
-		JPanel authorsBtnPanel = new JPanel(new GridLayout(1, 3));
-		authorsBtnPanel.add((addAuthorBtn = new ModifiedButton("Add Record")));
-		authorsBtnPanel.add((deleteAuthorBtn = new ModifiedButton("Delete Record")));
-		authorsBtnPanel.add((updateAuthorBtn = new ModifiedButton("Update Record")));
-		authorsPanel.add(authorsBtnPanel, BorderLayout.SOUTH);
-		
-		JPanel titlesBtnPanel = new JPanel(new GridLayout(1,3));
-		titlesBtnPanel.add((addTitlesBtn = new ModifiedButton("Add Record")));
-		titlesBtnPanel.add((deletetitlesBtn = new ModifiedButton("Delete Record")));
-		titlesBtnPanel.add((updateTitlesBtn = new ModifiedButton("Update Record")));
-		titlesPanel.add(titlesBtnPanel, BorderLayout.SOUTH);
-		
-		JPanel isbnBtnPanel = new JPanel(new GridLayout(1,3));
-		isbnBtnPanel.add((addISBNBtn = new ModifiedButton("Add Record")));
-		isbnBtnPanel.add((deleteISBNBtn = new ModifiedButton("Delete Record")));
-		isbnBtnPanel.add((updateTitlesBtn = new ModifiedButton("Update Record")));
-		isbnTitlesPanel.add(isbnBtnPanel, BorderLayout.SOUTH);
-		
-		
-		pane.addTab("Authors", authorsPanel);
-		pane.addTab("Titles",titlesPanel);
-		pane.addTab("ISBN-Title",isbnTitlesPanel);
-		add(pane);
-		pack();
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setVisible(true);
 	}//end of BooksDBFrontEnd()
 	
 	public static void main(String [] args){
