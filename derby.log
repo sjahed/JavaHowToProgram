@@ -1,6 +1,6 @@
 ----------------------------------------------------------------
-Tue Oct 25 21:09:54 EDT 2016:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.11.1.2 - (1629631): instance a816c00e-0157-fe89-5109-00000e4d9c00 
+Tue Oct 25 22:38:03 EDT 2016:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.11.1.2 - (1629631): instance a816c00e-0157-feda-05ed-00000e4d9d30 
 on database directory /Users/sjahed/workspace/JavaHowToProgram/books with class loader sun.misc.Launcher$AppClassLoader@2a139a55 
 Loaded from file:/Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home/db/lib/derby.jar
 java.vendor=Oracle Corporation
