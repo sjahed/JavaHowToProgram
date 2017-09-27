@@ -1,7 +1,6 @@
 package ch28;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -18,150 +17,131 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 public class Client extends JFrame {
-
-	public static void main(String [] args){
-		Client application;
-		
-		if(args.length == 0)
-			application = new Client("127.0.0.1");
-		else
-			application = new Client(args[0]);
-		application.runClient();
-	}
-	private JTextField enterField;
-	private JTextArea displayArea;
-	private ObjectOutputStream output;
-	private ObjectInputStream input;
-	private String message = "";
-	private String chatServer;
-	private Socket client;
+	private int HEIGHT = 300;
+	private int WIDTH = 400;
+	private String SERVER = "127.0.0.1";
+	private int PORT = 12345;
 	
-	public Client(String host){
-		super("Client");
+	private JTextField inputField;
+	private JTextArea contentArea;
+	
+	private Socket connection;
+	private ObjectInputStream input;
+	private ObjectOutputStream output;
+	
+	public static void main(String [] args){
+		new Client();
+	}
+	public Client(){
 		
-		enterField = new JTextField();
-		enterField.setEditable(false);
-		enterField.addActionListener(new ActionListener() {
+		super("Client");
+		inputField = new JTextField();
+		inputField.setEditable(false);
+		inputField.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				sendData(e.getActionCommand());
-				enterField.setText("");
-				
+				sendData(e.getActionCommand(), output);
+				inputField.setText("");
 			}
 		});
-		add(enterField,BorderLayout.NORTH);
-		displayArea = new JTextArea();
-		add(new JScrollPane(displayArea), BorderLayout.CENTER);
+		contentArea = new JTextArea();
 		
+		add(inputField, BorderLayout.NORTH);
+		add(new JScrollPane(contentArea), BorderLayout.CENTER);
 		
-		
+		setSize(HEIGHT, WIDTH);
 		setVisible(true);
-		pack();
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-	}
-	
-	
-	public void runClient(){
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		try {
-			connectToServer();
-			getStreams();
-			processConnection();
-		} catch (UnknownHostException e) {
+			connection = getConnection(SERVER, PORT);
+			displayMessage("Connected to: "+connection.getInetAddress().getHostName()+"\n");
+			output = getOutputStream(connection);
+			output.flush();
+			input = getInputStream(connection);
+			processConnection(connection, input, output);
+		} catch (UnknownHostException e1) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}finally{
+			closeConnection(connection,input,output);
+		}
+		
+	}//end of Client()
+	private void processConnection(Socket conn, ObjectInputStream input, ObjectOutputStream output){
+		setTextFieldEditable(true);
+		String message = "";
+		do{
+			try {
+				message = (String) input.readObject();
+				displayMessage(message+"\n");
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}while(!message.equals("SERVER>>> TERMINATE"));
+		
+	}//end of processConnection
+	
+	private void closeConnection(Socket con, ObjectInputStream in, ObjectOutputStream out){
+		try {
+			in.close();
+			out.close();
+			con.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}finally{
-			closeConnection();
 		}
-		
 	}
 	
-	private void closeConnection() {
-		displayMessage("\nClosing connection");
-		setTextFieldEditable(false);
-		try{
-			output.close();
-			input.close();
-			client.close();
-		}catch(IOException e){
-			e.printStackTrace();
-		}
-	}
-
-
-	private void processConnection() throws IOException {
-		setTextFieldEditable(true);
-		do{
-			try{
-				message = (String) input.readObject();
-			}catch(ClassNotFoundException e){
-				displayMessage("\nUnkonw object type recieved");
-			}
-		}while(!message.equals("SERVER>>> TERMINATE"));
-		
-	}
-
-
-	private void setTextFieldEditable(boolean editable) {
+	private void setTextFieldEditable(boolean ans){
 		SwingUtilities.invokeLater(new Runnable() {
 			
 			@Override
 			public void run() {
-				enterField.setEditable(editable);
-				
+				inputField.setEditable(ans);
 			}
 		});
-		
+	}//end of setTextFieldEditable()
+	
+	private Socket getConnection(String server, int port) throws UnknownHostException, IOException{
+		displayMessage("Attempting to connect to server\n");
+		return new Socket(InetAddress.getByName(server), port);
+	}//end of getConnection(server,port)
+	
+	private ObjectInputStream getInputStream(Socket conn) throws IOException{
+		return new ObjectInputStream(conn.getInputStream());
 	}
-
-
-	private void getStreams() throws IOException {
-		
-		output = new ObjectOutputStream(client.getOutputStream());
-		output.flush();
-		input = new ObjectInputStream(client.getInputStream());
-		displayMessage("\nGot I/O Streams\n");
-		
+	
+	private ObjectOutputStream getOutputStream(Socket conn) throws IOException{
+		return new ObjectOutputStream(conn.getOutputStream());
 	}
-
-
-	private void connectToServer() throws UnknownHostException, IOException {
-		displayMessage("Attempting Connection\n");
-		client = new Socket(InetAddress.getByName(chatServer), 12345);
-		displayMessage("Connected to: "+ client.getInetAddress().getHostName());
-		
-	}
-
-
-	private void displayMessage(String message) {
-		SwingUtilities.invokeLater(new Runnable() {
-			
-			@Override
-			public void run() {
-				displayArea.append(message);				
-			}
-		});
-		
-	}
-
-
-	private void sendData(String actionCommand) {
-		try{
+	
+	private void sendData(String message, ObjectOutputStream output){
+		try {
 			output.writeObject("CLIENT>>> "+message);
 			output.flush();
-			displayMessage("\nCLIENT>>> "+message);
-		}catch(IOException e){
-			displayArea.append("\nError writing object");
+			displayMessage("CLIENT>>> "+message+"\n");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
-	}
+	}//end of sendData(msg,ouputStream)
 	
-	@Override
-	public Dimension getPreferredSize(){
-		return new Dimension(300,150);
-	}
-}//end of Client class
+	private void displayMessage(String msg){
+		SwingUtilities.invokeLater(new Runnable(){
+			public void run() {
+				contentArea.append(msg);
+			}
+		});
+	}//end of displayMessage(msg)
+}//end of Client

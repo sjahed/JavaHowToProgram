@@ -1,10 +1,8 @@
 package ch28;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -12,153 +10,164 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-public class Server extends JFrame {
 
-	public static void main(String [] args){
-		Server server = new Server();
-		server.runServer();
-	}
+public class Server extends JFrame{
+
+	private int HEIGHT = 300;
+	private int WIDTH = 400;
+	private int PORT_NUMBER = 12345;
+	private int NUMBER_OF_CLIENTS = 1;
 	
-	private JTextField enterField;
-	private JTextArea displayArea;
-	private ObjectOutputStream output;
-	private ObjectInputStream input;
+	private JTextField inputField;
+	private JTextArea  contentArea;
 	private ServerSocket server;
 	private Socket connection;
-	private int counter = -1;
+	private ObjectInputStream input;
+	private ObjectOutputStream output;
 	
+	public static void main(String[] args) {
+		new Server();
+	}
+
 	public Server(){
+	
 		super("Server");
 		
-		enterField = new JTextField();
-		enterField.setEditable(false);
-		enterField.addActionListener(new ActionListener() {
+		//initialize values
+		inputField = new JTextField();
+		inputField.setEditable(false);
+		inputField.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				sendData(e.getActionCommand());
-				enterField.setText("");
+				sendData(e.getActionCommand(), output);
+				inputField.setText("");
 			}
 		});
+		contentArea = new JTextArea();
+		contentArea.setEditable(false);
 		
-		add(enterField, BorderLayout.NORTH);
+		//add to frame
+		add(inputField, BorderLayout.NORTH);
+		add(new JScrollPane(contentArea), BorderLayout.CENTER);
 		
-		displayArea = new JTextArea();
-		add(new JScrollPane(displayArea), BorderLayout.CENTER);
-		
-		pack();
+		setSize(HEIGHT, WIDTH);
 		setVisible(true);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		//activate server and get connections
+		try {
+			server = startServer(PORT_NUMBER, NUMBER_OF_CLIENTS);
+			while(true){
+				
+				try{
+					connection = getConnection(server);
+					output = getOutputStream(connection);
+					output.flush();
+					displayMessage("here\n");
+					input = getInputStream(connection);
+					processConnection(output,input);
+				}finally{
+					closeConnection(connection, input, output);
+				}
+				
+				
+			}//end of while(true)
+		} catch (IOException e) {
+			e.printStackTrace();
+		}//end of try-catch(ioException)-finally
+		
+		
+
 	}//end of Server()
 	
-	@Override
-	public Dimension getPreferredSize(){
-		return new Dimension(300,140);
-	}
+	private ServerSocket startServer(int port, int numClients) throws IOException{
+		return new ServerSocket(port, numClients);
+	}//end of startServer(port,client)
 	
-	public void runServer(){
-		try {
-			server = new ServerSocket(12345,100);
-			while(true){
-				try{
-					waitForConnection();
-					getStreams();
-					processConnection();
-				}catch(EOFException eofe){
-					displayMessage("\nServer terminated connection.");
-				}finally{
-					closeConnection();
-					++counter;
-				}
+	private Socket getConnection(ServerSocket server) throws IOException{
+		Socket conn;
+		displayMessage("Waiting for connection\n");
+		conn = server.accept();
+		displayMessage("Connection received from: "+conn.getInetAddress().getHostName()+"\n");
+		return conn;
+	}//end of getConnection(server)
+	
+	private ObjectInputStream getInputStream(Socket conn) throws IOException{
+		return new ObjectInputStream(conn.getInputStream());
+	}//end of getInputStream(conn)
+	
+	private ObjectOutputStream getOutputStream(Socket conn) throws IOException{
+		return new ObjectOutputStream(conn.getOutputStream());
+	}//end of getOutputStream(conn)
+	
+	private void processConnection(ObjectOutputStream output, ObjectInputStream input){
+		String message = "Connection to client Successful";
+		sendData(message,output);
+		setTextEditable(true);
+		
+		do{
+			try {
+				message = (String) input.readObject();
+			} catch (ClassNotFoundException e) {
+				displayMessage("\nUnknown Object Type Received");
+			} catch ( IOException ioe){
+				displayMessage("\nCouldn't receive data\n");
 			}
+		}while(!message.equals("CLIENT>>> TERMINATE"));
+		
+	}//end of processConnection
+	
+	private void sendData(String message, ObjectOutputStream output){
+		
+		try {
+			output.writeObject("SERVER>>> "+message);
+			output.flush();
+			displayMessage("\nSERVER>>> "+message);
+		} catch (IOException e) {
+			displayMessage("\nError writing object");
+		}
+		
+	}//end of sendData(msg, outputStream)
+	
+	private void setTextEditable(final boolean answer){
+		SwingUtilities.invokeLater(new Runnable(){
+
+			@Override
+			public void run() {
+				inputField.setEditable(answer);
+			}
+			
+		});
+	}//end of setTextEditable(boolean)
+	
+	private void closeConnection(Socket connection, ObjectInputStream input, ObjectOutputStream output){
+		displayMessage("\nTerminating Connection\n");
+		setTextEditable(false);
+		try {
+			input.close();
+			output.close();
+			connection.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-	}//end of runServer()
+	}//end of closeConnection(conn)
 	
-	private void getStreams() throws IOException {
-		
-		output = new ObjectOutputStream(connection.getOutputStream());
-		output.flush();
-		input = new ObjectInputStream(connection.getInputStream());
-		displayMessage("\nGot I/O Stream\n");
-		
-	}
-
-	private void closeConnection() {
-		displayMessage("\nTerminating Connection.\n");
-		setTextFieldEditable(false);
-		try{
-			output.close();
-			input.close();
-			connection.close();
-		}catch(IOException e){
-			e.printStackTrace();
-		}
-		
-	}
-
-	private void displayMessage(final String message) {
-		SwingUtilities.invokeLater(new Runnable() {
-			
-			@Override
-			public void run() {
-				displayArea.append(message);				
-			}
-		});
-		
-	}
-
-	private void processConnection() throws IOException {
-		String message = "Connection Successful";
-		sendData(message);
-		
-		setTextFieldEditable(true);
-		do{
-			try{
-				message = (String) input.readObject();
-				displayMessage("\n"+message);
-			}catch(ClassNotFoundException cnfe){
-				displayMessage("\nUnknown object type recieved.\n");
-			}
-		}while(!message.equals("CLIENT>>> TERMINATE"));
-		
-	}
-
-	private void setTextFieldEditable(final boolean editable) {
-		SwingUtilities.invokeLater(new Runnable() {
-			
-			@Override
-			public void run() {
-				enterField.setEditable(editable);
-				
-			}
-		});
-		
-	}
-
-	private void waitForConnection() throws IOException {
-		displayMessage("Waiting for connection\n");
-		connection = server.accept();
-		displayMessage("Connection "+ counter + "received from: "+
-					connection.getInetAddress().getHostAddress());
-		
-	}
-
-	public void sendData(String message){
-		try{
-			output.writeObject("SERVER>>> "+message);
-			output.flush();
-			displayMessage("\nSERVER>>>"+message);
-		}catch(IOException e){
-			displayArea.append("\nError writing object");
-		}
-	}
-}//end of Server class
+	private void displayMessage(final String msg){
+		SwingUtilities.invokeLater(
+				new Runnable(){
+					public void run(){
+						contentArea.append(msg);
+					}
+				}
+				);
+	}//end of displayMessage(msg)
+	
+}//end of Server

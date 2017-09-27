@@ -1,7 +1,6 @@
 package ch28;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -15,60 +14,57 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
 public class ReadServerFile extends JFrame {
-
-	private JTextField urlField;
-	private JEditorPane contentArea;
 	
-	public ReadServerFile(){
-		super("Simple Web browser");
-		
-		urlField = new JTextField("Enter URL");
-		urlField.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				getThePage(e.getActionCommand());
-				
-			}
+	private JTextField enterField;
+	private JEditorPane contentPane;
+	
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		ReadServerFile application = new ReadServerFile();
+		application.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}//end of main()
 
-			
-		});
-		add(urlField,BorderLayout.NORTH);
+	public ReadServerFile(){
+		super("Simple Browser");
 		
-		contentArea = new JEditorPane();
-		contentArea.setEditable(false);
-		contentArea.addHyperlinkListener(new HyperlinkListener() {
-			
-			@Override
-			public void hyperlinkUpdate(HyperlinkEvent e) {
+		enterField = new JTextField("Enter Your URL Here");
+		enterField.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent event){
+						getThePage(event.getActionCommand());
+					}
+				}
 				
-				if(e.getEventType() == 
-						HyperlinkEvent.EventType.ACTIVATED)
-					getThePage(e.getURL().toString());
+				);
+		add(enterField, BorderLayout.NORTH);
+		
+		contentPane = new JEditorPane();
+		contentPane.setEditable(false);
+		contentPane.addHyperlinkListener(
+				new HyperlinkListener(){
+
+					@Override
+					public void hyperlinkUpdate(HyperlinkEvent e) {
+						if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
+							getThePage(e.getURL().toString());
+					}
+					
+				}
 				
-			}
-		});
-		add(new JScrollPane(contentArea), BorderLayout.CENTER);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+				);//end of contentPane.addHyperlinkListener()
+		add(new JScrollPane(contentPane), BorderLayout.CENTER);
+		setSize(400,300);
 		setVisible(true);
-		pack();
-	}
+	}//end of ReadServerFile()
 	
 	private void getThePage(String location) {
 		try{
-			contentArea.setPage(location);
-			urlField.setText(location);
-		}catch(IOException e){
-			JOptionPane.showMessageDialog(this, "Error Retrieving the Page","BAD URL",
-					JOptionPane.ERROR_MESSAGE);
+			contentPane.setPage(location);
+			enterField.setText(location);
+		}catch(IOException ioe){
+			JOptionPane.showMessageDialog(this, "Error Retrieving URL", "BAD URL",JOptionPane.ERROR_MESSAGE);
 		}
 		
-	}
-	@Override
-	public Dimension getPreferredSize(){
-		return new Dimension(400,300);
-	}
-	public static void main(String [] args){
-		new ReadServerFile();
-	}
+	}//end of getThePage(location)
+	
 }//end of ReadServerFile class
