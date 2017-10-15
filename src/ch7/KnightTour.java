@@ -1,159 +1,156 @@
 package ch7;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.accessibility.Accessible;
 
 public class KnightTour {
 
-	private final int BMIN = -1;
-	private final int BMAX = 8;
+	public static void main(String [] args){
+		new KnightTour();
+	}
+	private final int BOARD_DIM = 8;
 	
-	private final int [][] allowedMoves = {
-			{2,-1}, {1,-2}, {-1,-2}, {-2,-1},
-			{-2,1}, {-1,2}, {1,2}, {2,1}
-	};
-	private final int [][] accessbility = {
-			{2,3,4,4,4,4,3,2},
-			{3,4,6,6,6,6,4,3},
-			{4,6,8,8,8,8,6,4},
-			{4,6,8,8,8,8,6,4},
-			{4,6,8,8,8,8,6,4},
-			{4,6,8,8,8,8,6,4},
-			{3,4,6,6,6,6,4,3},
-			{2,3,4,4,4,4,3,2}
-	};
+	Knight knight;
+	Board board;
+	public KnightTour(){
+		knight = new Knight(0,0);
+		board = new Board();
+	
+		int moveNumber = 0;
+		board.changeSquare(knight.getPos(), knight.getCount());//mark the start position
+		//starting from x,y check if the next possible move position of knight
+		//is inside the board and whether that positoin has already been visited
+		//if both of those were true, then check the next move.
+		//if not visited and the moves lands inside the board then move the knight 
+		//to the new position, mark the board as visited, change the next move number to
+		//zero and repeat it
+		//continue this until you land in a position where you can't move
+		do{
+			if(board.isInside(knight.nextPosCoord(moveNumber)) &&
+				!board.visited(knight.nextPosCoord(moveNumber))	){
+				knight.move(moveNumber);//move the knight to new position, and increment counter
+				board.changeSquare(knight.getPos(), knight.getCount());
+				moveNumber = 0;//start from position zero again
+			}//end of if(knightCanMove && isNotVisited)
+			
+			moveNumber++;
+		}while(moveNumber < 8);
+		
+		System.out.format("Knight moved %d times\n\n", knight.getCount());
+		board.printBoard();
+		
+	}//end of KnightTour()
+	
 
-	private int currentXPos;
-	private int currentYPos;
 	
-	private boolean [][]visited = new boolean[8][8];
-	int totalVisited;
-	
-	public KnightTour(int xStartPos, int yStartPos){
-		totalVisited = 0;
-		currentXPos = xStartPos;
-		currentYPos = yStartPos;
+	class Board{
+		int [][] board;
 		
-		//System.out.println(startTour());
-	}
-	
-	private void updateKnightPosition(int newX, int newY){
+		Board(){
+			board = new int[BOARD_DIM][BOARD_DIM];
+			for(int []row: board)
+				Arrays.fill(row, -1);
+		}//end of Board()
 		
-		currentXPos = newX;
-		currentYPos = newY;
-	}
-	
-	public int startTour(){
-		
-		
-		while(movePossible(currentXPos, currentYPos)){
-			
-			Integer [][] nxtPosofKnight;
-			if( (nxtPosofKnight = getNextMove(currentXPos, currentYPos)) != null){
-				
-				updateKnightPosition(nxtPosofKnight[0][0], nxtPosofKnight[0][1]);
-				visited[currentXPos][currentYPos] = true;
-				totalVisited++;
-				
-			}
-			
+		//if a board has any number equal and bigger than
+		//0, it means it was visited by the knight and changed
+		boolean visited(int []coords){
+			return (board[coords[0]][coords[1]] >= 0 )? true:false;
 		}
 		
+		//end when board is full
+		boolean isFull(){
+			for(int i = 0; i < board.length; i++)
+				for(int j = 0; j < board[i].length; j++)
+					if(board[i][j] == 0)
+						return false;
+			return true;
+		}//end of isFull()
 		
-		return totalVisited;
-	}
-	
-	public void step(){
-		
-		if(movePossible(currentXPos,currentYPos)){
-			Integer [][] nxtPosofKnight;
-			if( (nxtPosofKnight = getNextMove(currentXPos, currentYPos)) != null){
-				
-				updateKnightPosition(nxtPosofKnight[0][0], nxtPosofKnight[0][1]);
-				visited[currentXPos][currentYPos] = true;
-				totalVisited++;
-				
-			}
-		}
-	}
-	
-	public int[] getCurrentPosition(){
-		int [] result = {currentXPos,currentYPos};
-		return result;
-	}
-	
-	public int getTotalVisited(){
-		return totalVisited;
-	}
-	private boolean movePossible(int x, int y){
-		boolean result = false;
-		int hMoveValuePos = 0;
-		int vMoveValuePos = 1;
-		
-		for(int [] nm : allowedMoves){
-			
-			int nX = x + nm[hMoveValuePos];
-			int nY = y + nm[vMoveValuePos];
-			
-			//if x,y are within boundary and has not been visited
-			if((nX > BMIN && nX < BMAX) && ( nY > BMIN && nY < BMAX) && !visited[nX][nY]){
-				result = true;
-				break;
-			}
-		}
-		return result;
-		
-	}
-	
-	private ArrayList<Integer[][]> possibleMoves(int x, int y){
-		
-		ArrayList<Integer[][]> pm = new ArrayList<Integer[][]>();
-		int hMoveValuePos = 0;
-		int vMoveValuePos = 1;
-	
-		for(int [] nm : allowedMoves){
-			
-			int nX = x + nm[hMoveValuePos];
-			int nY = y + nm[vMoveValuePos];
-			
-			//if x,y are within boundary and has not been visited
-			if((nX > BMIN && nX < BMAX) && ( nY > BMIN && nY < BMAX) && !visited[nX][nY]){
-				Integer[][] m = new Integer[1][2];
-				m[0][0] = nX;
-				m[0][1] = nY;
-				
-				pm.add(m);
-				
-			}
-		}
-		return pm;
-		
-	}
-	
-	private Integer[][] getNextMove(int oldX, int oldY){
-		Integer [][] result = null;
-		
-		ArrayList<Integer[][]> possibleMoves = possibleMoves(oldX, oldY);
-		
-		for(Integer [][] move : possibleMoves){
-			
-			if(result == null)
-				result = move;
-			else{
-				
-				if(accessbility[result[0][0]][result[0][1]] > accessbility[move[0][0]][move[0][1]])
-					result = move;
-				
-			}
+		//change the value of square with a value
+		//the coords are the position of knight and value 
+		//is the move number of knight
+		void changeSquare(int[] coords, int value){
+			board[coords[0]][coords[1]] = value;
 		}
 		
-		return result;
-	}
+		//position 0 is x value and position 1
+		//represents y value of coordinates
+		boolean isInside(int[]coords){
+			return ((coords[0] >= 0 && coords[0] < board.length) &&
+					(coords[1] >= 0 && coords[1] < board.length)) ? true : false;
+		}//end of isInsideBoard
+		
+		//print the board,
+		void printBoard(){
+			for(int i = 0; i < board.length; i++){
+				for(int j = 0; j < board[i].length; j++)
+					System.out.format("%4d",board[i][j]);
+				System.out.format("\n");
+			}//end of outer for()
+		}//end of printBoard
+		
+	}//end of Board
 	
+	class Knight{
+		
+		//the list of possible moves of a knight 
+		//on a board is 8. it's row and col movement
+		//for each move is in the table below for moves
+		//0 to 7.
+		int []horizontal = {2,1,-1,-2,-2,-1,1,2};
+		int []vertical = {-1,-2,-2,-1,1,2,2,1};
+		int x, y;//x,y position of the knight
+		int counter;//to count number of moves
+		
+		Knight(){
+			this(0,0);
+		}
+		Knight(int x, int y){
+			
+			this.x = x;
+			this.y = y;
+			counter = 0;
+			
+			
+		}//end of Knight(x,y)
+		
+		
+		int [] getPos(){
+			return new int[]{x,y};
+		}
+
+		int getCount(){
+			return counter;
+		}
+		
+//		//check if knight can move from current position
+//		boolean canMove(int moveN){
+//			int []nextPos = getPos();
+//			nextPos[0] += vertical[moveN];
+//			nextPos[1] += horizontal[moveN];
+//			
+//			return isInsideBoard(nextPos);
+//		}//end of canMove(x,y)
+		
+		//get knights next position based on move
+		int[] nextPosCoord(int moveN){
+			int []nextPos = getPos();
+			nextPos[0] += vertical[moveN];
+			nextPos[1] += horizontal[moveN];
+			return nextPos;
+		}//end of nextPosCoord(moveN)
+		
+		void move(int moveN){
+			x += vertical[moveN];
+			y += horizontal[moveN];
+			counter++;
+		}//end of move
+		
+
+		
+	}//end of Knight
 	
-	
-//	public static void main(String [] args){
-//		new KnightTour(0,0);
-//	}
-}
+}//end of KnightTour

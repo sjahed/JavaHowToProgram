@@ -7,7 +7,7 @@ public class SieveOfEratosthenes {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		new SieveOfEratosthenes(1000);
+		new SieveOfEratosthenes(100);
 	}
 	
 	private boolean [] primeNumbers;
